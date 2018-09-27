@@ -1,0 +1,54 @@
+/*
+ * =====================================================================================
+ *    Description:  simple echo server
+ *        Version:  1.0
+ *        Created:  09/27/2018 02:18:58 PM
+ *         Author:  xiaochen.jiang (kl), jiangxch.hn@gmail.com
+ * =====================================================================================
+ */
+
+#include "common.h"
+
+void str_echo(int sockfd)
+{
+	ssize_t n;
+	char buf[MAXLINE];
+  again:
+	while ((n = read(sockfd, buf, MAXLINE)) > 0)
+		Writen(sockfd, buf, n);
+	if (n < 0 && errno == EINTR)
+		goto again;
+	else if (n < 0)
+		err_sys("str_echo:read error");
+}
+
+int main(int argc, const char *argv[])
+{
+//  mydaemonize("myechod");
+
+	struct sockaddr_in cli_addr, ser_addr;
+	memset(&ser_addr, 0, sizeof(ser_addr));
+	ser_addr.sin_family = AF_INET;
+	ser_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	ser_addr.sin_port = htons(SERV_PORT);
+
+	int listen_fd;
+	chk_nega((listen_fd =
+			  initserver(SOCK_STREAM, (SA *) & ser_addr, sizeof(ser_addr),
+						 LISTENQ)));
+
+	int connfd, child_pid;
+	socklen_t cli_len;
+	while (1) {
+		cli_len = sizeof(cli_addr);
+		chk_nega((connfd = accept(listen_fd, (SA *) & cli_addr, &cli_len)));
+		chk_nega((child_pid = fork()));
+		if (child_pid == 0) {
+			chk_nega(close(listen_fd));
+			str_echo(connfd);
+			exit(0);
+		}
+		chk_nega(close(connfd));
+	}
+	return 0;
+}

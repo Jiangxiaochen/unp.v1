@@ -11,15 +11,18 @@
 
 void str_echo(int sockfd)
 {
+	char line[MAXLINE];
 	ssize_t n;
-	char buf[MAXLINE];
-  again:
-	while ((n = read(sockfd, buf, MAXLINE)) > 0)
-		Writen(sockfd, buf, n);
-	if (n < 0 && errno == EINTR)
-		goto again;
-	else if (n < 0)
-		err_sys("str_echo:read error");
+	long a, b;
+	while(1){
+		if((n = Readline(sockfd, line, MAXLINE)) == 0) return;
+		if(sscanf(line, "%ld %ld", &a, &b) == 2)
+			snprintf(line, MAXLINE, "%ld\n", a + b);
+		else
+			snprintf(line, MAXLINE, "input error\n");
+		n = strlen(line);
+		Writen(sockfd, line, n);
+	}
 }
 
 int main(int argc, const char *argv[])

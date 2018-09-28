@@ -34,7 +34,6 @@
 #include <netinet/in.h>
 #endif
 
-
 #define chk_nega(call) if ((call) < 0) {\
     err_sys("Error in `" #call "` syscall (%s:%d)", __FILE__, __LINE__);\
 }
@@ -67,10 +66,15 @@ static inline Sighandler_t mysignal(int signo, Sighandler_t func)
 		act.sa_flags |= SA_INTERRUPT;
 #endif
 	} else {
+#ifdef SA_RESTART
 		act.sa_flags |= SA_RESTART;
+#endif
 	}
-	chk_nega(sigaction(signo, &act, &oact));
+//  chk_nega(sigaction(signo, &act, &oact));
+	if (sigaction(signo, &act, &oact) < 0)
+		return SIG_ERR;
 	return oact.sa_handler;
+
 }
 
 static inline void mydaemonize(const char *cmd)
@@ -146,7 +150,7 @@ static inline int initserver(int type, const struct sockaddr *addr,
 	return (-1);
 }
 
-static inline char *my_sock_ntop(const  SA *sa, socklen_t salen)
+static inline char *my_sock_ntop(const SA * sa, socklen_t salen)
 {
 	char port[8];
 	static char str[128];
@@ -171,4 +175,10 @@ static inline int sockfd_to_family_jxc(int sockfd)
 	return ss.ss_family;
 }
 
+static inline void sigchld0(int sig)
+{
+	int pid_chld;
+	while ((pid_chld = waitpid(-1, 0, WNOHANG)) > 0);
+	return;                                     /* 系统调用被中断时可追踪 */
+}
 #endif

@@ -12,6 +12,7 @@
 #define COMMON_JXC_APUE_H
 
 #include "unp.h"
+#include <limits.h>
 #include <time.h>
 #include <assert.h>
 #include <sys/resource.h>
@@ -181,4 +182,28 @@ static inline void sigchld0(int sig)
 	while ((pid_chld = waitpid(-1, 0, WNOHANG)) > 0);
 	return;                                     /* 系统调用被中断时可追踪 */
 }
+
+static inline long open_max(void)
+{
+#ifdef OPEN_MAX
+    static long openmax = OPEN_MAX;
+#else
+    static long openmax = 0;
+#endif
+
+#define OPEN_MAX_GUESS 256                      /* inadequate */
+    if (openmax == 0) {
+        errno = 0;
+        if((openmax = sysconf(_SC_OPEN_MAX)) < 0){
+            if(errno == 0)
+                openmax = OPEN_MAX_GUESS;
+            else{
+                fprintf(stderr, "sysconf error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+    return openmax;
+}
+
 #endif

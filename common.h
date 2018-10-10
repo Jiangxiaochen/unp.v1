@@ -151,6 +151,15 @@ static inline int initserver(int type, const struct sockaddr *addr,
 	return (-1);
 }
 
+static inline int InitTCPServer(int type, const struct sockaddr *addr,
+							 socklen_t alen, int qlen)
+{
+	int fd;
+	if ((fd = initserver(type, addr, alen, qlen)) == -1)
+		err_sys("initserver error");
+	return fd;
+}
+
 static inline char *my_sock_ntop(const SA * sa, socklen_t salen)
 {
 	char port[8];
@@ -180,30 +189,30 @@ static inline void sigchld0(int sig)
 {
 	int pid_chld;
 	while ((pid_chld = waitpid(-1, 0, WNOHANG)) > 0);
-	return;                                     /* 系统调用被中断时可追踪 */
+	return;						/* 系统调用被中断时可追踪 */
 }
 
 static inline long open_max(void)
 {
 #ifdef OPEN_MAX
-    static long openmax = OPEN_MAX;
+	static long openmax = OPEN_MAX;
 #else
-    static long openmax = 0;
+	static long openmax = 0;
 #endif
 
-#define OPEN_MAX_GUESS 256                      /* inadequate */
-    if (openmax == 0) {
-        errno = 0;
-        if((openmax = sysconf(_SC_OPEN_MAX)) < 0){
-            if(errno == 0)
-                openmax = OPEN_MAX_GUESS;
-            else{
-                fprintf(stderr, "sysconf error\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-    return openmax;
+#define OPEN_MAX_GUESS 256		/* inadequate */
+	if (openmax == 0) {
+		errno = 0;
+		if ((openmax = sysconf(_SC_OPEN_MAX)) < 0) {
+			if (errno == 0)
+				openmax = OPEN_MAX_GUESS;
+			else {
+				fprintf(stderr, "sysconf error\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	return openmax;
 }
 
 #endif

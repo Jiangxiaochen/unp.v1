@@ -14,3 +14,6 @@ all: $(TARGETS)
 clean:
 	rm -f ./bin/*
 
+tags: $(H_FILES)
+	ctags *.h
+

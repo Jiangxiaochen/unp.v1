@@ -78,6 +78,26 @@ static inline Sighandler_t mysignal(int signo, Sighandler_t func)
 
 }
 
+static inline void printHostent(struct hostent *hptr)
+{
+	char **pptr;
+	char str[INET_ADDRSTRLEN];
+	printf("official hostname: %s\n", hptr->h_name);
+
+	for (pptr = hptr->h_aliases; *pptr != NULL; pptr++)
+		printf("\talias: %s\n", *pptr);
+	if (hptr->h_addrtype == AF_INET) {
+		pptr = hptr->h_addr_list;
+		while (*pptr != NULL) {
+			printf("\taddress: %s\n",
+				   Inet_ntop(AF_INET, *pptr, str, sizeof(str)));
+			pptr++;
+		}
+	} else {
+		err_ret("unknown address type");
+	}
+}
+
 static inline void mydaemonize(const char *cmd)
 {
 	int i, fd0, fd1, fd2;
